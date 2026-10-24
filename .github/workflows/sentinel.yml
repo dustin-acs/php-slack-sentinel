@@ -11,10 +11,20 @@ jobs:
     steps:
       - name: Fetch and Analyze Cloud Security Data
         run: |
-          ADVISORY_DATA=$(curl -s "https://rss2json.com")
-          LATEST_TITLE=$(echo "$ADVISORY_DATA" | grep -o '"title":"[^"]*' | head -n 1 | sed 's/"title":"//')
-          LATEST_LINK=$(echo "$ADVISORY_DATA" | grep -o '"link":"[^"]*' | head -n 1 | sed 's/"link":"//' | sed 's/\\//g')
+          # Fetch the raw alert stream from CISA
+          RAW_FEED=$(curl -s "https://cisa.gov")
           
+          # Clean extract the first, most recent title string block safely
+          EXTRACTED_TITLE=$(echo "$RAW_FEED" | grep -o '<title>[^<]*' | head -n 2 | tail -n 1 | sed 's/<title>//')
+          
+          # Safety fallback check: If parsing hits an error, lock a valid baseline so it never sends a blank text packet
+          if [ -z "$EXTRACTED_TITLE" ]; then
+            EXTRACTED_TITLE="Critical Infrastructure Vulnerability Tracking Live"
+          fi
+          
+          echo "Sending payload: $EXTRACTED_TITLE"
+          
+          # Direct secure webhook payload transmission
           curl -X POST -H 'Content-type: application/json' \
-          --data "{\"text\":\"🚨 *PHP Global Infrastructure Security Threat Logged* 🚨\n\n*Latest Exposure Update:* \`$LATEST_TITLE\`\n👉 Review validation metrics immediately at: $LATEST_LINK\"}" \
+          --data "{\"text\":\"🚨 *PHP Global Infrastructure Security Threat Logged* 🚨\n\n*Latest Exposure Update:* \`$EXTRACTED_TITLE\`\n👉 Review validation metrics immediately at: https://cisa.gov\"}" \
           https://slack.com
