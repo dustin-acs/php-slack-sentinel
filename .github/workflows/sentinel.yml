@@ -24,3 +24,5 @@ jobs:
           curl -X POST -H 'Content-type: application/json' \
           --data "{\"text\":\"🚨 *PHP Global Infrastructure Security Threat Logged* 🚨\n\n*Latest Exposure Update:* \`$LATEST_TITLE\`\n👉 Review validation metrics immediately at: $LATEST_LINK\"}" \
           https://slack.com
+
+          # wake up
