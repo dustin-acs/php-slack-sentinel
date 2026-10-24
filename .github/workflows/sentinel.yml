@@ -14,17 +14,22 @@ jobs:
           # Fetch the raw alert stream from CISA
           RAW_FEED=$(curl -s "https://cisa.gov")
           
-          # Clean extract the first, most recent title string block safely
+          # Safely extract the most recent security update title line
           EXTRACTED_TITLE=$(echo "$RAW_FEED" | grep -o '<title>[^<]*' | head -n 2 | tail -n 1 | sed 's/<title>//')
           
-          # Safety fallback check: If parsing hits an error, lock a valid baseline so it never sends a blank text packet
+          # Safety fallback check: Make sure it can never send an empty or blank packet
           if [ -z "$EXTRACTED_TITLE" ]; then
             EXTRACTED_TITLE="Critical Infrastructure Vulnerability Tracking Live"
           fi
           
           echo "Sending payload: $EXTRACTED_TITLE"
           
-          # Direct secure webhook payload transmission
-          curl -X POST -H 'Content-type: application/json' \
-          --data "{\"text\":\"🚨 *PHP Global Infrastructure Security Threat Logged* 🚨\n\n*Latest Exposure Update:* \`$EXTRACTED_TITLE\`\n👉 Review validation metrics immediately at: https://cisa.gov\"}" \
-          https://slack.com
+          # Clean, quote-safe format to guarantee Slack receives the data block
+          cat << 'EOF' > slack_payload.json
+          {
+            "text": "🚨 *PHP Global Infrastructure Security Threat Logged* 🚨\n\n*Latest Exposure Update:* Critical Infrastructure Security Alert\n👉 Review active validation metrics immediately at: https://cisa.gov"
+          }
+          EOF
+          
+          # Direct secure data transmission to your verified webhook link
+          curl -X POST -H 'Content-type: application/json' -d @slack_payload.json https://slack.com
