@@ -1,1 +1,1 @@
-# php-slack-sentinel
+# php-slack-sentinel.
