@@ -1,0 +1,26 @@
+name: PHP Security Sentinel Loop
+
+on:
+  schedule:
+    - cron: '*/15 * * * *' # Automatically checks the data loop every 15 minutes
+  workflow_dispatch: # Allows you to manually click a button to test it instantly
+
+jobs:
+  check-php-threats:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch and Analyze Cloud Security Data
+        run: |
+          # Fetch cloud-cleared JSON metadata from the CISA advisory index
+          ADVISORY_DATA=$(curl -s "https://rss2json.com")
+          
+          # Isolate the latest security update item headline string safely
+          LATEST_TITLE=$(echo "$ADVISORY_DATA" | grep -o '"title":"[^"]*' | head -n 1 | sed 's/"title":"//')
+          LATEST_LINK=$(echo "$ADVISORY_DATA" | grep -o '"link":"[^"]*' | head -n 1 | sed 's/"link":"//' | sed 's/\\//g')
+          
+          echo "Current Live Advisory Security Baseline: $LATEST_TITLE"
+          
+          # Send payload directly to your verified active public Slack Webhook Channel
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"🚨 *PHP Global Infrastructure Security Threat Logged* 🚨\n\n*Latest Exposure Update:* \`$LATEST_TITLE\`\n👉 Review validation metrics immediately at: $LATEST_LINK\"}" \
+          https://slack.com
